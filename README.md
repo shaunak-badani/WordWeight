@@ -9,6 +9,7 @@
 - Running the predict code
 ```bash
 # Option 1 - to test if packages are installed correctly
+cd replicate
 python predict.py 
 
 # Option 2 - via cog. Needs docker to be installed locally

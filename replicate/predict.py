@@ -58,29 +58,21 @@ class Predictor(BasePredictor):
         raise ValueError(f"Unsupported mode: {mode}")
         
     def explain_mask(self, prompt: str, 
-            mask_path) -> TokenImportance:
+            mask_path) -> list[TokenImportance]:
         """
         Get's individual token importance given the prompt and a mask
         """
-        # image = self.generate_image(prompt)
-        # self.pipe.vae.eval()
-        # image_sum = image.sum()
-        # image_sum.backward()
-        # return self.get_token_importance()
-        dummy_dict = [
-            TokenImportance(word="a", importance=2.0),
-            TokenImportance(word="futuristic", importance=4.0),
-            TokenImportance(word="landscape", importance=6.0)
-        ]
-        return dummy_dict[0]
+        image = self.generate_image(prompt)
+        self.pipe.vae.eval()
+        image_sum = image.sum()
+        image_sum.backward()
+        return self.get_token_importance()
 
     def get_token_importance(self):
         """
         Get's individual token importance based on computed gradients
         """
         special_token_ids = set()
-        print("self text input: ", self.text_input)
-        print("self text embeddings : ", self.text_embeddings)
 
         for attr in ["bos_token", "eos_token", "pad_token", "unk_token"]:
             token = getattr(self.pipe.tokenizer, attr, None)
@@ -88,7 +80,6 @@ class Predictor(BasePredictor):
                 token_id = self.pipe.tokenizer.convert_tokens_to_ids(token)
                 special_token_ids.add(token_id)
 
-        token_importance = {}
         for token in self.pipe.tokenizer.additional_special_tokens:
             token_id = self.pipe.tokenizer.convert_tokens_to_ids(token)
             special_token_ids.add(token_id)
@@ -102,10 +93,16 @@ class Predictor(BasePredictor):
         if final_importance.sum() > 0:
             final_importance /= final_importance.sum()
         token_ids = self.text_input.input_ids[0, mask]
+        token_importance = []
         for i, token_id in enumerate(token_ids):
             imp = final_importance[i]
             word = self.pipe.tokenizer.decode(token_id)
-            token_importance[word] = imp.item()
+            token_importance.append(
+                TokenImportance(
+                    word = word,
+                    importance = imp.item()
+                )
+            )
         return token_importance
             
     def generate_image(self, prompt):
