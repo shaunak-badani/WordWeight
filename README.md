@@ -17,3 +17,16 @@ pip install cog
 cog predict -i prompt="a futuristic cityscape" -i mode="generate" -i mask_path=@masked_image.png
 cog predict -i prompt="a futuristic cityscape" -i mode="explain" -i mask_path=@masked_image.png
 ```
+
+- Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+- Backend
+```bash
+cd backend
+REPLICATE_API_TOKEN=... uvicorn src.main:app --reload
+```
