@@ -24,6 +24,7 @@ build:
 
   # commands run after the environment is setup
   run:
+    - apt-get remove -y --allow-change-held-packages libcudnn8
     - echo "Environment setup complete."
 
 # predict.py defines how predictions are run on your model
