@@ -7,6 +7,8 @@ from diffusers import StableDiffusionPipeline, DDIMScheduler
 import torch
 import torch.utils.checkpoint as cp
 from pathlib import Path as LocalPath
+from PIL import Image
+import numpy as np
 
 class TokenImportance(BaseModel):
     word: str
@@ -62,9 +64,15 @@ class Predictor(BasePredictor):
         """
         Get's individual token importance given the prompt and a mask
         """
+        print("Mask path: ", mask_path)
+        mask_pil = Image.open(mask_path).convert("RGB") # Convert to grayscale
+        mask_torch = torch.from_numpy(np.array(mask_pil)).to(self.torch_dtype) / 255.0
+        mask_torch = mask_torch.permute(2, 0, 1).unsqueeze(0).to(self.device)
+        print("Mask torch shape : ", mask_torch.shape)
         image = self.generate_image(prompt)
+        assert mask_torch.shape == image.shape, "Image and mask must be of same shape!"
         self.pipe.vae.eval()
-        image_sum = image.sum()
+        image_sum = (image * mask_torch).sum()
         image_sum.backward()
         return self.get_token_importance()
 
@@ -114,7 +122,7 @@ class Predictor(BasePredictor):
         text_embeddings.retain_grad()
         self.text_embeddings = text_embeddings
         with torch.enable_grad():
-            latents = torch.randn((1, self.pipe.unet.in_channels, 64, 64), device=self.device)
+            latents = torch.randn((1, self.pipe.unet.config.in_channels, 64, 64), device=self.device)
             latents = latents.to(self.torch_dtype) * self.pipe.scheduler.init_noise_sigma
         
         x = latents
@@ -122,7 +130,7 @@ class Predictor(BasePredictor):
         for i, t in enumerate(self.pipe.scheduler.timesteps):
             model_input = self.pipe.scheduler.scale_model_input(x, t)
             print(i, end = " ")
-            noise_pred = cp.checkpoint(self.unet_forward, model_input, t, text_embeddings)
+            noise_pred = cp.checkpoint(self.unet_forward, model_input, t, text_embeddings, use_reentrant=False)
             scheduler_output = self.pipe.scheduler.step(noise_pred, t, x)
             x = scheduler_output.prev_sample
         self.pipe.vae.eval()

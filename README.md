@@ -14,6 +14,6 @@ python predict.py
 
 # Option 2 - via cog. Needs docker to be installed locally
 pip install cog
-cog predict -i prompt="a futuristic cityscape" -i mode="generate" -i mask_path=@output.png
-cog predict -i prompt="a futuristic cityscape" -i mode="explain" -i mask_path=@output.png
+cog predict -i prompt="a futuristic cityscape" -i mode="generate" -i mask_path=@masked_image.png
+cog predict -i prompt="a futuristic cityscape" -i mode="explain" -i mask_path=@masked_image.png
 ```

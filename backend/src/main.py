@@ -2,12 +2,19 @@ from fastapi import FastAPI, Depends, status, HTTPException
 from fastapi.requests import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.exceptions import HTTPException
+
+# replicate
+import replicate
 
 # DB functions
 from models import get_db, DataFetcher
 from schema import UserResponse
 from sqlalchemy.orm import Session
+
+# Image downloading
+import requests
+import base64
 
 app = FastAPI(root_path='/api')
 
@@ -32,17 +39,33 @@ async def root():
         content = {"message": "Hello world!"}
     )
 
-@app.get("/mean")
-def query_mean_model(query: str):
+@app.get("/generate")
+def generate_image(prompt: str):
     """
-    Query endpoint for the mean model
+    Query endpoint to generate image given prompt
     """
-    # Pass query to some function
-    answer = f"Response to the mean query : {query}"
-    # answer = f(query) 
-    return JSONResponse(
-        content = { "message": answer }
-    )
+    with open("./masked_image.png", "rb") as mask_file:
+        image_url = replicate.run(
+            "shaunak-badani/wordweight:1cfd38753b1f35fd2edd9a949dcd655dd77b9b2f6840adb8100fd6f3ac298183",
+            input={
+                "prompt": prompt,
+                "mode": "generate",
+                "mask_path": mask_file
+            }
+        )
+    image_url = "https://replicate.delivery/czjl/TV9hMjYfSm06P6HxjogTeRipNxv8H1oS7DPJl0V7tdN5idkUA/generated_image.png" 
+    try:
+        response = requests.get(image_url)
+        response.raise_for_status()
+        image_bytes = response.content
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "error": str(e)
+        })
+    return JSONResponse(content={
+        "message": image_base64
+    })
 
 @app.get("/traditional")
 def query_traditional_model(query: str):
@@ -51,19 +74,6 @@ def query_traditional_model(query: str):
     """
     # Pass query to some function
     answer = f"Response to the traditional query : {query}"
-    # answer = f(query) 
-    return JSONResponse(
-        content = {"message": answer}
-    )
-
-
-@app.get("/deep-learning")
-def query_deep_learning_model(query: str):
-    """
-    Query endpoint for the deep learning model
-    """
-    # Pass query to some function
-    answer = f"Response to the deep learning model query : {query}"
     # answer = f(query) 
     return JSONResponse(
         content = {"message": answer}
