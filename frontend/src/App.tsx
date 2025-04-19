@@ -26,7 +26,7 @@ function App() {
         <Card className="grid grid-cols-3 grid-gap-4">
           <div className="col-span-1" />
           <div className="header p-6 text-4xl font-extrabold lg:text-4xl">
-            AppName
+            WordWeight
           </div>
           <div className="col-span-1 flex items-center">
             <NavigationMenuDemo />
@@ -37,7 +37,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/examples" element={<Examples />} />
-            {/* Add a catch-all for 404 */}
             <Route path="*" element={<h2>404 - Page Not Found</h2>} />
           </Routes>
           </main>

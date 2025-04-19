@@ -13,8 +13,8 @@ const Mean = () => {
     const [response, setResponse] = useState("");
 
     const presetValues = [
-        "What is the weather in New york today?",
-        "What is 2 + 2?"
+        "A futuristic cityscape",
+        "Jumbo shrimp next to a tiny house"
     ]
 
     const handlePromptInput = async(query: string) => {
@@ -30,7 +30,7 @@ const Mean = () => {
 
     return (
         <>
-            <h6 className="pb-6 sm:pb-6 text-xl">Mean model</h6>
+            <h6 className="pb-6 sm:pb-6 text-xl">Write a prompt to generate an image</h6>
             <Textarea
                 value={query}
                 onChange = {(e) => setQuery(e.target.value)} 
