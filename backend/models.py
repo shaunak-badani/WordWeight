@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from schema import Base, User
+from schema import Base, GeneratedImage
 
 DATABASE_URL = "postgresql://postgres:password@localhost:5432/app_db"
 engine = create_engine(DATABASE_URL)
@@ -22,10 +22,28 @@ class DataFetcher:
 
     @classmethod
     def get_users(cls, db):
-        users = db.query(User).all()
+        users = db.query(GeneratedImage).all()
         return users
     
     @classmethod
-    def get_user(cls, db, user_id):
-        user = db.query(User).filter(User.id == user_id).first()
+    def insert_generated_image(cls, db, *, image_base64, prompt):
+        if image_base64 is None or prompt is None:
+            raise ValueError("Image or prompt cannot be none!")
+        new_image = GeneratedImage(image_base64 = image_base64, prompt = prompt)
+        db.add(new_image)
+        db.commit()
+        return new_image
+    
+    @classmethod
+    def get_image_if_exists(cls, db, *, prompt):
+        if prompt is None:
+            raise ValueError("Prompt cannot be none!")
+        image = db.query(GeneratedImage).filter_by(prompt=prompt).first()
+        # None if no image found, image returned if found
+        return image
+
+    
+    @classmethod
+    def get_user(cls, db, image_id):
+        user = db.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
         return user
