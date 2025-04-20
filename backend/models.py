@@ -21,9 +21,9 @@ def get_db():
 class DataFetcher:
 
     @classmethod
-    def get_users(cls, db):
-        users = db.query(GeneratedImage).all()
-        return users
+    def get_explained_images(cls, db):
+        explained_images = db.query(ExplainedImage).all()
+        return explained_images
     
     @classmethod
     def insert_generated_image(cls, db, *, image_base64, prompt):

@@ -3,28 +3,36 @@ import backendClient from "@/backendClient";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 import { Card } from "@/components/ui/card";
 import useGlobalStore from "@/store/store";
+import ExplainedImage from "./ExplainedImage";
 
 const Examples = () => {
   const [isLoading, setLoading] = useState(false);
-  const [users, setUsers] = useState([]);
+  const [explainedImages, setExplainedImages] = useState([]);
 
-  const fetchUsers = async() => {
+  const fetchImages = async() => {
     setLoading(true);
-    const response = await backendClient.get("/users");
+    const response = await backendClient.get("/explained-images");
     if(response.data)
-      setUsers(response.data)
+    {
+      setExplainedImages(response.data)
+    }
     setLoading(false);
   }
   const error = useGlobalStore(state => state.error);
 
   useEffect(() => {
-    fetchUsers();
+    fetchImages();
   }, []);
 
   return (
     <>
-      <h1>Users</h1>
-      {!error && users.map(user => <Card>{user.name}</Card>)}
+      <h1>Previously run images</h1>
+      {!error && explainedImages.map((image, index) => 
+        <ExplainedImage
+          key={index}
+          image={image}
+          />
+      )}
       {isLoading && <BackdropWithSpinner />}
     </>
   );

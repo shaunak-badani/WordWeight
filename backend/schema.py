@@ -3,6 +3,7 @@ from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Dict, Any
 
 Base = declarative_base()
 
@@ -47,3 +48,18 @@ class GeneratedImageResponse(BaseModel):
 class ImageUpload(BaseModel):
     prompt: str
     image_base64: str
+
+class TokenImportance(BaseModel):
+    word: str
+    importance: float
+
+class ExplainedImageResponse(BaseModel):
+    id: int
+    generated_image_id: int
+    tokens_imp: list[TokenImportance]  # Adjust type depending on your tokens_imp structure
+    created_at: datetime
+    masked_image: str
+    generated_image: GeneratedImageResponse
+
+    class Config:
+        orm_mode = True

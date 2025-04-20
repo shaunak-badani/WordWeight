@@ -9,7 +9,7 @@ import replicate
 
 # DB functions
 from models import get_db, DataFetcher
-from schema import GeneratedImageResponse, ImageUpload
+from schema import GeneratedImageResponse, ImageUpload, ExplainedImageResponse
 from sqlalchemy.orm import Session
 from models import create_db
 
@@ -47,6 +47,10 @@ async def root():
     return JSONResponse(
         content = {"message": "Hello world!"}
     )
+
+@app.get("/explained-images", response_model = list[ExplainedImageResponse])
+def get_explained_images(db: Session = Depends(get_db)):
+    return DataFetcher.get_explained_images(db)
 
 @app.get("/generate", response_model=GeneratedImageResponse)
 def generate_image(prompt: str, db: Session = Depends(get_db)):

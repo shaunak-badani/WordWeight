@@ -4,7 +4,6 @@ load_dotenv()
 import replicate
 
 import os
-print("Key : ", os.environ.get("REPLICATE_API_TOKEN"))
 
 client = replicate.Client(api_token = os.environ.get("REPLICATE_API_TOKEN"))
 
