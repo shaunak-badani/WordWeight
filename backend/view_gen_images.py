@@ -23,7 +23,10 @@ def delete_image_by_id(image_id: int):
         session.close()
 
 # Delete image with ID = 2
-delete_image_by_id(2)
+# delete_image_by_id(1)
+# delete_image_by_id(2)
+delete_image_by_id(6)
+delete_image_by_id(7)
 
 def view_generated_images():
     session = SessionLocal()
@@ -32,7 +35,7 @@ def view_generated_images():
         for img in images:
             print(f"ID: {img.id}")
             print(f"Prompt: {img.prompt}")
-            print(f"Image (base64): {img.image_base64[:100]}...")  # Print first 100 chars
+            print(f"Image (base64): {img.image_base64[:200]}...")  # Print first 100 chars
             print(f"Created at: {img.created_at}")
             print("-" * 40)
     finally:
