@@ -13,7 +13,6 @@ backendClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (!error.response) {
-            console.log("Error here : ", error)
             // Backend unreachable (network error, CORS, DNS failure, etc.)
             let msg = "Cannot connect to backend server."
             globalStore.getState().setError(msg);

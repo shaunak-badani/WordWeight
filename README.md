@@ -30,3 +30,9 @@ npm run dev
 cd backend
 REPLICATE_API_TOKEN=... uvicorn src.main:app --reload
 ```
+
+- Local database (run via docker)
+
+```bash
+sudo docker compose -f docker-compose-db.yml up
+```

@@ -1,6 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, GeneratedImage, ExplainedImage  # Replace with your actual model import
+from schema import Base, GeneratedImage, ExplainedImage, ExplainedImageResponse # Replace with your actual model import
+
+import base64
+from PIL import Image
+import matplotlib.pyplot as plt
+from io import BytesIO
 
 # Replace with your actual database URL
 DATABASE_URL = "postgresql://postgres:password@localhost:5432/app_db"
@@ -22,12 +27,33 @@ def delete_explained_image_by_id(image_id: int):
     finally:
         session.close()
 
+def decode_and_show_base64_image(base64_str: str, title="Masked Image"):
+    if base64_str.startswith("data:image"):
+        base64_str = base64_str.split(",")[1]
+    image_data = base64.b64decode(base64_str)
+    image = Image.open(BytesIO(image_data))
+    plt.imshow(image)
+    plt.axis('off')
+    plt.title(title)
+    plt.show()
+
+def show_explained_image_by_id(image_id: int):
+    session = SessionLocal()
+    try:
+        img = session.query(ExplainedImage).filter(ExplainedImage.id == image_id).first()
+        if img:
+            decode_and_show_base64_image(img.masked_image, title=f"Masked Image ID: {img.id}")
+        else:
+            print(f"No explained image found with ID {image_id}")
+    finally:
+        session.close()
+
 # Delete image with ID = 2
 # delete_image_by_id(1)
 # delete_image_by_id(2)
 # delete_image_by_id(6)
 # delete_image_by_id(7)
-delete_explained_image_by_id(1)
+# delete_explained_image_by_id(1)
 
 def view_generated_images():
     session = SessionLocal()
@@ -57,5 +83,7 @@ def view_explained_images():
         session.close()
 
 if __name__ == "__main__":
-    view_generated_images()
-    view_explained_images()
+    # view_generated_images()
+    delete_explained_image_by_id(8)
+    # view_explained_images()
+    # show_explained_image_by_id(4)

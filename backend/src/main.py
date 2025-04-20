@@ -82,15 +82,16 @@ def generate_image(prompt: str, db: Session = Depends(get_db)):
         })
     return inserted_image
 
-@app.post("/explain")
+@app.post("/explain", response_model = ExplainedImageResponse)
 def explain_tokens(data: ImageUpload, db: Session = Depends(get_db)):
     """
     Query endpoint for the traditional model
     """
-    existing_explained_image = DataFetcher.get_explained_image_if_exists(db, prompt = data.prompt)
+    current_prompt = data.prompt.lower()
+    existing_explained_image = DataFetcher.get_explained_image_if_exists(db, prompt = current_prompt)
     if existing_explained_image:
         return existing_explained_image
-    existing_image = DataFetcher.get_image_if_exists(db, prompt = data.prompt)
+    existing_image = DataFetcher.get_image_if_exists(db, prompt = current_prompt)
     try:
         # Decode the base64 image
         header = "data:image/png;base64,"
@@ -108,9 +109,7 @@ def explain_tokens(data: ImageUpload, db: Session = Depends(get_db)):
         overlay[mask == 1] = (
             alpha * dark_overlay[mask == 1] + (1 - alpha) * current_image[mask == 1]
         ).astype(np.uint8)
-        # Image.fromarray(overlay).save("./overlaid.png")
-        overlayBase64 = mask_to_base64(overlay)
-        # tokenImportances = [{ "a" : 2.0 }]
+        overlayBase64 = image_to_base64(overlay)
 
         with open("/tmp/maskOutput.png", "rb") as mask_file:
             tokenImportances = replicate.run(
@@ -121,13 +120,12 @@ def explain_tokens(data: ImageUpload, db: Session = Depends(get_db)):
                     "mask_path": mask_file
                 }
             )
-        DataFetcher.insert_explained_image(db, generated_image=existing_image, 
+        explained_image = DataFetcher.insert_explained_image(db, generated_image=existing_image, 
                     masked_image = overlayBase64, tokenImportances=tokenImportances)
+        return explained_image
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return JSONResponse(
-        content = {"message": tokenImportances}
-    )
+    return existing_explained_image
 
 
 def base64_to_mask(base64_str: str) -> np.ndarray:
@@ -136,8 +134,8 @@ def base64_to_mask(base64_str: str) -> np.ndarray:
     mask = np.array(img).astype(np.uint8)
     return mask
 
-def mask_to_base64(mask: np.ndarray) -> str:
-    img = Image.fromarray((mask * 255).astype(np.uint8))  # assuming binary mask
+def image_to_base64(mask: np.ndarray) -> str:
+    img = Image.fromarray(mask.astype(np.uint8))  # assuming binary mask
     buffered = io.BytesIO()
     img.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8")

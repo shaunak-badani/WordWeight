@@ -61,7 +61,7 @@ const Mean = () => {
             </Button>
             {response.length > 0 && <ImageOverlay
                 image={response}
-                prompt={prompt}
+                prompt={query}
                 />}
             {isLoading && <BackdropWithSpinner />}
         </>

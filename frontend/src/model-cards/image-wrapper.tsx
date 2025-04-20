@@ -3,18 +3,36 @@ import { Canvas, Rect } from "fabric";
 import * as fabric from "fabric";
 import { Button } from "@/components/ui/button";
 import backendClient from "@/backendClient";
+import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 
 
 const ImageOverlay = (props: any) => {
 
+    const [isLoading, setLoading] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement | undefined>(undefined);
     const [canvas, setCanvas] = useState<Canvas | null>(null);
     const [rect, setRect] = useState<Rect | null>(null);
+    const [maskedImage, setMaskedImage] = useState("");
+    const [tokenImportances, setTokenImportances] = useState([]);
 
-    const { image, prompt } = props;
+    let fontWeights = [
+        "font-thin",
+        "font-extralight",
+        "font-light",
+        "font-normal",
+        "font-medium",
+        "font-semibold",
+        "font-bold",
+        "font-extrabold",
+        "font-black"
+    ]
+    // const [responses, ]
+
+    let { image, prompt } = props;
+    if(maskedImage)
+        image = maskedImage
 
     let imageSrc = `data:image/png;base64,${image}`;
-    console.log("ImageSrc : ", imageSrc)
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -59,7 +77,7 @@ const ImageOverlay = (props: any) => {
     }, [imageSrc]);
 
     const handleExplainBox = async() => {
-        console.log("Canvas : ", canvas);
+        setLoading(true);
         if(canvas)
         {
 
@@ -68,8 +86,6 @@ const ImageOverlay = (props: any) => {
                 height: canvas.height,
                 backgroundColor: 'black',
             });
-            // console.log(maskCanvas);
-            // const cloneRect = fabric.util.object.clone(rect) as Rect;
             const cloneRect = rect;
             if(cloneRect)
             {
@@ -78,19 +94,27 @@ const ImageOverlay = (props: any) => {
                     stroke: null,
                     opacity: 1,
                 });
-                console.log(cloneRect);
                 maskCanvas.add(cloneRect);
             }
             maskCanvas.renderAll();
 
             const p = maskCanvas.toDataURL({ format: 'png' });
-            console.log("p : ", p);
 
             const response = await backendClient.post("/explain", {
                 "prompt": prompt,
                 "image_base64": p,
             });
+
             console.log(response);
+            if(!response.data)
+            {
+                setLoading(false);
+                return;
+            }
+            setMaskedImage(response.data.masked_image);
+            setMaskedImage(response.data.masked_image);
+            setTokenImportances(response.data.tokens_imp);
+            setLoading(false);
         }
     }
 
@@ -102,6 +126,14 @@ const ImageOverlay = (props: any) => {
             <Button className="p-6 sm:p-6 rounded-2xl m-8 sm:m-8" onClick={handleExplainBox}>
                 Explain
             </Button>
+            {}
+            {isLoading && <BackdropWithSpinner />}
+            <div className="text-3xl">
+                {tokenImportances.map(tokenImp => {
+                    const index = parseInt(tokenImp.importance / 0.11);
+                    return(<span className={fontWeights[index]}>{tokenImp.word} </span>);
+                })}
+            </div>
         </>
     )
 

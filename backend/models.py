@@ -62,4 +62,4 @@ class DataFetcher:
             generated_image = generated_image, masked_image = masked_image, tokens_imp = tokenImportances)
         db.add(new_explained_image)
         db.commit()
-        # return new_explained_image
+        return new_explained_image

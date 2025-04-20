@@ -4,24 +4,33 @@ const ExplainedImage = (props: any) => {
     const {image, key} = props;
 
     const imageSrc = image.masked_image;
+    const tokenImportances = image.tokens_imp;
+    let fontWeights = [
+        "font-thin",
+        "font-extralight",
+        "font-light",
+        "font-normal",
+        "font-medium",
+        "font-semibold",
+        "font-bold",
+        "font-extrabold",
+        "font-black"
+    ]
     return (
         
         <div className="flex justify-center m-6 sm:m-6" key={key}>
-        <Card className="w-3/4 flex">
+        <Card className="w-full flex">
           <img 
             src={`data:image/jpeg;base64,${imageSrc}`} 
             alt="Business"
             style={{ maxWidth: "40%", height: "auto" }} 
             />
-          <div className="w-full flex flex-row justify-center">
+          <div className="w-full flex flex-row items-center justify-center text-2xl">
             <CardContent>
-              <div className="flex flex-row justify-evenly">
-                  <div className="flex flex-row w-full items-center gap-4 justify-center">
-                      <div className="flex flex-col space-y-1.5">
-                          <div>Test</div>
-                      </div>
-                  </div>
-              </div>
+                {tokenImportances.map(tokenImp => {
+                    const index = parseInt(tokenImp.importance / 0.11);
+                    return(<span className={fontWeights[index]}>{tokenImp.word} </span>);
+                })}
             </CardContent>
           </div>
         </Card>
