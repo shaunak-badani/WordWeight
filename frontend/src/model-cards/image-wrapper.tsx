@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { Canvas, Rect } from "fabric";
 import * as fabric from "fabric";
 import { Button } from "@/components/ui/button";
+import backendClient from "@/backendClient";
 
 
 const ImageOverlay = (props: any) => {
@@ -10,7 +11,7 @@ const ImageOverlay = (props: any) => {
     const [canvas, setCanvas] = useState<Canvas | null>(null);
     const [rect, setRect] = useState<Rect | null>(null);
 
-    const { image } = props;
+    const { image, prompt } = props;
 
     let imageSrc = `data:image/png;base64,${image}`;
     console.log("ImageSrc : ", imageSrc)
@@ -47,6 +48,7 @@ const ImageOverlay = (props: any) => {
             });
             initCanvas.add(cRect);
             setRect(cRect);
+            setCanvas(initCanvas);
             initCanvas.renderAll();
         };
 
@@ -56,7 +58,8 @@ const ImageOverlay = (props: any) => {
         };
     }, [imageSrc]);
 
-    const handleExplainBox = () => {
+    const handleExplainBox = async() => {
+        console.log("Canvas : ", canvas);
         if(canvas)
         {
 
@@ -82,6 +85,12 @@ const ImageOverlay = (props: any) => {
 
             const p = maskCanvas.toDataURL({ format: 'png' });
             console.log("p : ", p);
+
+            const response = await backendClient.post("/explain", {
+                "prompt": prompt,
+                "image_base64": p,
+            });
+            console.log(response);
         }
     }
 
@@ -89,7 +98,6 @@ const ImageOverlay = (props: any) => {
         <>
             <div className="flex justify-center">
                 <canvas ref={canvasRef} width={500} height={500} style={{ border: "1px solid #ccc" }} />
-                
             </div>
             <Button className="p-6 sm:p-6 rounded-2xl m-8 sm:m-8" onClick={handleExplainBox}>
                 Explain

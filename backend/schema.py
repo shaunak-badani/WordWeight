@@ -29,10 +29,10 @@ class ExplainedImage(Base):
     generated_image_id = Column(Integer, ForeignKey("generated_images.id"), nullable=False)
     tokens_imp = Column(JSONB, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+    masked_image = Column(JSONB, nullable=False)
 
     # Relationship to fetch the associated generated image
-    generated_image = relationship("GeneratedImage", back_populates="explanations")  
-
+    generated_image = relationship("GeneratedImage", back_populates="explanations") 
 
 class GeneratedImageResponse(BaseModel):
     id: int
@@ -42,3 +42,8 @@ class GeneratedImageResponse(BaseModel):
 
     class Config:
         orm_mode = True  # This tells Pydantic to treat the SQLAlchemy model as a dict
+
+
+class ImageUpload(BaseModel):
+    prompt: str
+    image_base64: str

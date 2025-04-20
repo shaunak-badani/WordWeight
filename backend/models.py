@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from schema import Base, GeneratedImage
+from schema import Base, GeneratedImage, ExplainedImage
 
 DATABASE_URL = "postgresql://postgres:password@localhost:5432/app_db"
 engine = create_engine(DATABASE_URL)
@@ -36,14 +36,30 @@ class DataFetcher:
     
     @classmethod
     def get_image_if_exists(cls, db, *, prompt):
-        if prompt is None:
-            raise ValueError("Prompt cannot be none!")
         image = db.query(GeneratedImage).filter_by(prompt=prompt).first()
         # None if no image found, image returned if found
         return image
-
     
     @classmethod
-    def get_user(cls, db, image_id):
-        user = db.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
-        return user
+    def get_explained_image_if_exists(cls, db, *, prompt):
+        if prompt is None:
+            raise ValueError("Prompt cannot be none!")
+        explained_image = db.query(ExplainedImage) \
+        .join(ExplainedImage.generated_image) \
+        .filter(GeneratedImage.prompt == prompt) \
+        .first()
+        return explained_image
+    
+
+    @classmethod
+    def insert_explained_image(cls, db, *, generated_image, masked_image, tokenImportances):
+        if generated_image is None or masked_image is None or tokenImportances is None:
+            raise ValueError("Image or prompt cannot be none!")
+        print(generated_image)
+        print(masked_image)
+        print(tokenImportances)
+        new_explained_image = ExplainedImage(
+            generated_image = generated_image, masked_image = masked_image, tokens_imp = tokenImportances)
+        db.add(new_explained_image)
+        db.commit()
+        # return new_explained_image

@@ -9,13 +9,17 @@ import replicate
 
 # DB functions
 from models import get_db, DataFetcher
-from schema import GeneratedImageResponse
+from schema import GeneratedImageResponse, ImageUpload
 from sqlalchemy.orm import Session
 from models import create_db
 
 # Image downloading
 import requests
 import base64
+import io
+from PIL import Image
+from io import BytesIO
+import numpy as np
 
 app = FastAPI(root_path='/api')
 
@@ -74,25 +78,62 @@ def generate_image(prompt: str, db: Session = Depends(get_db)):
         })
     return inserted_image
 
-@app.get("/traditional")
-def query_traditional_model(query: str):
+@app.post("/explain")
+def explain_tokens(data: ImageUpload, db: Session = Depends(get_db)):
     """
     Query endpoint for the traditional model
     """
-    # Pass query to some function
-    answer = f"Response to the traditional query : {query}"
-    # answer = f(query) 
+    existing_explained_image = DataFetcher.get_explained_image_if_exists(db, prompt = data.prompt)
+    if existing_explained_image:
+        return existing_explained_image
+    existing_image = DataFetcher.get_image_if_exists(db, prompt = data.prompt)
+    try:
+        # Decode the base64 image
+        header = "data:image/png;base64,"
+        if not data.image_base64.startswith(header):
+            raise HTTPException(status_code=400, detail="Base 64 not passed!")
+        base64_data = data.image_base64[len(header):]
+        np_mask = base64_to_mask(base64_data)
+        Image.fromarray(np_mask).save("/tmp/maskOutput.png")
+        mask = (np_mask > 0).astype(np.uint8)
+
+        current_image = base64_to_mask(existing_image.image_base64)
+        dark_overlay = np.zeros_like(current_image)  # black image
+        overlay = current_image.copy()
+        alpha = 0.4
+        overlay[mask == 1] = (
+            alpha * dark_overlay[mask == 1] + (1 - alpha) * current_image[mask == 1]
+        ).astype(np.uint8)
+        # Image.fromarray(overlay).save("./overlaid.png")
+        overlayBase64 = mask_to_base64(overlay)
+        # tokenImportances = [{ "a" : 2.0 }]
+
+        with open("/tmp/maskOutput.png", "rb") as mask_file:
+            tokenImportances = replicate.run(
+                "shaunak-badani/wordweight:1cfd38753b1f35fd2edd9a949dcd655dd77b9b2f6840adb8100fd6f3ac298183",
+                input={
+                    "prompt": data.prompt,
+                    "mode": "explain",
+                    "mask_path": mask_file
+                }
+            )
+        DataFetcher.insert_explained_image(db, generated_image=existing_image, 
+                    masked_image = overlayBase64, tokenImportances=tokenImportances)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return JSONResponse(
-        content = {"message": answer}
+        content = {"message": tokenImportances}
     )
 
-# @app.get("/users", response_model=list[UserResponse])
-# def get_users(db: Session = Depends(get_db)):
-#     return DataFetcher.get_users(db)
 
-# @app.get("/users/{user_id}", response_model = UserResponse)
-# def get_user(user_id: int, db: Session = Depends(get_db)):
-#     user = DataFetcher.get_user(db, user_id)
-#     if not user:
-#         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND)
-#     return user
+def base64_to_mask(base64_str: str) -> np.ndarray:
+    decoded = base64.b64decode(base64_str)
+    img = Image.open(io.BytesIO(decoded)).convert("RGB")
+    mask = np.array(img).astype(np.uint8)
+    return mask
+
+def mask_to_base64(mask: np.ndarray) -> str:
+    img = Image.fromarray((mask * 255).astype(np.uint8))  # assuming binary mask
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
