@@ -2,7 +2,6 @@ import './App.css'
 import { Card } from "@/components/ui/card"
 // import { SidebarProvider } from './components/ui/sidebar'
 // import Sidebar from './components/custom-sidebar'
-import useGlobalStore from './store/store'
 import ErrorOverlay from './model-cards/error-overlay'
 import { NavigationMenuDemo } from './components/nav-menu'
 import { Routes, Route } from "react-router-dom";
@@ -11,9 +10,6 @@ import { BrowserRouter } from "react-router-dom";
 import Examples from './pages/Examples'
 
 function App() {
-  const error = useGlobalStore(state => state.error);
-  console.log("Error: ", error);
-
   return (
     <BrowserRouter>
     <>

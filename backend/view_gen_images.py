@@ -9,6 +9,22 @@ DATABASE_URL = "postgresql://postgres:password@localhost:5432/app_db"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
+def delete_image_by_id(image_id: int):
+    session = SessionLocal()
+    try:
+        image = session.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
+        if image:
+            session.delete(image)
+            session.commit()
+            print(f"Deleted image with ID {image_id}")
+        else:
+            print(f"No image found with ID {image_id}")
+    finally:
+        session.close()
+
+# Delete image with ID = 2
+delete_image_by_id(2)
+
 def view_generated_images():
     session = SessionLocal()
     try:

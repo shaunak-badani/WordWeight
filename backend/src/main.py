@@ -62,20 +62,17 @@ def generate_image(prompt: str, db: Session = Depends(get_db)):
                 "mask_path": mask_file
             }
         )
-    image_url = "https://replicate.delivery/czjl/TV9hMjYfSm06P6HxjogTeRipNxv8H1oS7DPJl0V7tdN5idkUA/generated_image.png" 
     try:
         response = requests.get(image_url)
         response.raise_for_status()
         image_bytes = response.content
         image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-        DataFetcher.insert_generated_image(db, image_base64=image_base64, prompt = prompt)
+        inserted_image = DataFetcher.insert_generated_image(db, image_base64=image_base64, prompt = prompt)
     except Exception as e:
         return JSONResponse(status_code=500, content={
             "error": str(e)
         })
-    return JSONResponse(content={
-        "message": image_base64
-    })
+    return inserted_image
 
 @app.get("/traditional")
 def query_traditional_model(query: str):

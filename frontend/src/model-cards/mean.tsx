@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 import backendClient from "@/backendClient";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ImageOverlay from "./image-wrapper";
 
 
 const Mean = () => {
@@ -19,12 +20,15 @@ const Mean = () => {
 
     const handlePromptInput = async(query: string) => {
         setLoading(true);
-        const response = await backendClient.get("/mean", {
+        const response = await backendClient.get("/generate", {
             params: {
-                query: query
+                prompt: query
             }
         });
-        setResponse(response.data.message);
+        if(response.data)
+        {
+            setResponse(response.data.image_base64);
+        }
         setLoading(false);
     }
 
@@ -53,9 +57,11 @@ const Mean = () => {
                 </Select>
             </div>
             <Button className="p-6 sm:p-6 rounded-2xl m-8 sm:m-8" onClick={() => handlePromptInput(query)}>
-                Send
+                Generate
             </Button>
-            {response.length > 0 && <p>{response}</p>}
+            {response.length > 0 && <ImageOverlay
+                image={response}
+                />}
             {isLoading && <BackdropWithSpinner />}
         </>
     )
