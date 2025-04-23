@@ -28,7 +28,15 @@ npm run dev
 - Backend
 ```bash
 cd backend
-REPLICATE_API_TOKEN=... uvicorn src.main:app --reload
+# Create a .env file with the following environment variables:
+# REPLICATE_API_TOKEN=<your replicate api token here>
+# For localhost db setup, you can type the following:
+# POSTGRESQL_USERNAME=postgres
+# POSTGRESQL_PASSWORD=password
+# POSTGRESQL_URL=localhost:5432
+# POSTGRESQL_DBNAME=app_db
+export $(grep -v '^#' .env | xargs)
+uvicorn src.main:app --reload
 ```
 
 - Local database (run via docker)

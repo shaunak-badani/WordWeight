@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { TokenImportance } from "@/TokenImportance";
 
 const ExplainedImage = (props: any) => {
     const {image, key} = props;
 
     const imageSrc = image.masked_image;
-    const tokenImportances = image.tokens_imp;
+    const tokenImportances: TokenImportance[] = image.tokens_imp;
     let fontWeights = [
         "font-thin",
         "font-extralight",
@@ -28,7 +29,7 @@ const ExplainedImage = (props: any) => {
           <div className="w-full flex flex-row items-center justify-center text-2xl">
             <CardContent>
                 {tokenImportances.map(tokenImp => {
-                    const index = parseInt(tokenImp.importance / 0.11);
+                    const index = Math.floor(tokenImp.importance / 0.11);
                     return(<span className={fontWeights[index]}>{tokenImp.word} </span>);
                 })}
             </CardContent>

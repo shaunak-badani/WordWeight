@@ -1,7 +1,5 @@
 import './App.css'
 import { Card } from "@/components/ui/card"
-// import { SidebarProvider } from './components/ui/sidebar'
-// import Sidebar from './components/custom-sidebar'
 import ErrorOverlay from './model-cards/error-overlay'
 import { NavigationMenuDemo } from './components/nav-menu'
 import { Routes, Route } from "react-router-dom";
@@ -14,8 +12,6 @@ function App() {
     <BrowserRouter>
     <>
     <div>
-      {/* <SidebarProvider> */}
-      {/* <Sidebar> */}
 
       <ErrorOverlay />
       
@@ -37,8 +33,6 @@ function App() {
           </Routes>
           </main>
         </div>
-    {/* </Sidebar> */}
-    {/* </SidebarProvider> */}
     </div>
     
       

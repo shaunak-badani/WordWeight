@@ -4,16 +4,17 @@ import * as fabric from "fabric";
 import { Button } from "@/components/ui/button";
 import backendClient from "@/backendClient";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
+import { TokenImportance } from "@/TokenImportance";
 
 
 const ImageOverlay = (props: any) => {
 
     const [isLoading, setLoading] = useState(false);
-    const canvasRef = useRef<HTMLCanvasElement | undefined>(undefined);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
     const [canvas, setCanvas] = useState<Canvas | null>(null);
     const [rect, setRect] = useState<Rect | null>(null);
     const [maskedImage, setMaskedImage] = useState("");
-    const [tokenImportances, setTokenImportances] = useState([]);
+    const [tokenImportances, setTokenImportances] = useState<TokenImportance[]>([]);
 
     let fontWeights = [
         "font-thin",
@@ -81,7 +82,7 @@ const ImageOverlay = (props: any) => {
         if(canvas)
         {
 
-            const maskCanvas = new fabric.StaticCanvas(null, {
+            const maskCanvas = new fabric.StaticCanvas(undefined, {
                 width: canvas.width,
                 height: canvas.height,
                 backgroundColor: 'black',
@@ -98,20 +99,25 @@ const ImageOverlay = (props: any) => {
             }
             maskCanvas.renderAll();
 
-            const p = maskCanvas.toDataURL({ format: 'png' });
+            const p = maskCanvas.toDataURL({ format: 'png', 
+                quality: 1,
+                multiplier: 1,
+                left: 0,
+                top: 0,
+                width: maskCanvas.getWidth(),
+                height: maskCanvas.getHeight()
+            });
 
             const response = await backendClient.post("/explain", {
                 "prompt": prompt,
                 "image_base64": p,
             });
 
-            console.log(response);
             if(!response.data)
             {
                 setLoading(false);
                 return;
             }
-            setMaskedImage(response.data.masked_image);
             setMaskedImage(response.data.masked_image);
             setTokenImportances(response.data.tokens_imp);
             setLoading(false);
@@ -130,7 +136,7 @@ const ImageOverlay = (props: any) => {
             {isLoading && <BackdropWithSpinner />}
             <div className="text-3xl">
                 {tokenImportances.map(tokenImp => {
-                    const index = parseInt(tokenImp.importance / 0.11);
+                    const index = Math.floor(tokenImp.importance / 0.11);
                     return(<span className={fontWeights[index]}>{tokenImp.word} </span>);
                 })}
             </div>

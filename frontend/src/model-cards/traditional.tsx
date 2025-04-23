@@ -4,7 +4,7 @@ import backendClient from "@/backendClient";
 const Traditional = () => {
 
     const handlePromptInput = async() => {
-        const response = await backendClient.get("/error");
+        await backendClient.get("/error");
     }
 
     return (

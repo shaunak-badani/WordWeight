@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import backendClient from "@/backendClient";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
-import { Card } from "@/components/ui/card";
 import useGlobalStore from "@/store/store";
 import ExplainedImage from "./ExplainedImage";
 
