@@ -2,8 +2,20 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from schema import Base, GeneratedImage, ExplainedImage
+import os
+from dotenv import load_dotenv
 
-DATABASE_URL = "postgresql://postgres:password@localhost:5432/app_db"
+load_dotenv()
+# DATABASE_URL = "postgresql://postgres:password@localhost:5432/app_db"
+POSTGRES_USERNAME=os.getenv('POSTGRESQL_USERNAME')
+POSTGRESQL_PASSWORD=os.getenv('POSTGRESQL_PASSWORD')
+POSTGRESQL_URL=os.getenv('POSTGRESQL_URL')
+POSTGRESQL_DBNAME=os.getenv('POSTGRESQL_DBNAME')
+DATABASE_URL = f"postgresql://{POSTGRES_USERNAME}:{POSTGRESQL_PASSWORD}@{POSTGRESQL_URL}/{POSTGRESQL_DBNAME}"
+
+if "POSTGRESQL_DBMODE" in os.environ:
+    DATABASE_URL += "?sslmode=require"
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -55,9 +67,6 @@ class DataFetcher:
     def insert_explained_image(cls, db, *, generated_image, masked_image, tokenImportances):
         if generated_image is None or masked_image is None or tokenImportances is None:
             raise ValueError("Image or prompt cannot be none!")
-        print(generated_image)
-        print(masked_image)
-        print(tokenImportances)
         new_explained_image = ExplainedImage(
             generated_image = generated_image, masked_image = masked_image, tokens_imp = tokenImportances)
         db.add(new_explained_image)

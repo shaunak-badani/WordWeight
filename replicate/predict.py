@@ -64,11 +64,9 @@ class Predictor(BasePredictor):
         """
         Get's individual token importance given the prompt and a mask
         """
-        print("Mask path: ", mask_path)
         mask_pil = Image.open(mask_path).convert("RGB") # Convert to grayscale
         mask_torch = torch.from_numpy(np.array(mask_pil)).to(self.torch_dtype) / 255.0
         mask_torch = mask_torch.permute(2, 0, 1).unsqueeze(0).to(self.device)
-        print("Mask torch shape : ", mask_torch.shape)
         image = self.generate_image(prompt)
         assert mask_torch.shape == image.shape, "Image and mask must be of same shape!"
         self.pipe.vae.eval()
@@ -126,7 +124,6 @@ class Predictor(BasePredictor):
             latents = latents.to(self.torch_dtype) * self.pipe.scheduler.init_noise_sigma
         
         x = latents
-        print(f"Model running on : {self.device}")
         for i, t in enumerate(self.pipe.scheduler.timesteps):
             model_input = self.pipe.scheduler.scale_model_input(x, t)
             print(i, end = " ")
