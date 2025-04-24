@@ -4,7 +4,8 @@ services:
     build:
       context: ./frontend
       args:
-        API_URL: https://devils-codex.azurewebsites.net
+        API_URL: https://${WEBAPP_NAME}.azurewebsites.net
+    image: ${ACR_NAME}.azurecr.io/${WEBAPP_NAME}-frontend:latest
     ports:
       - "80:80"
 
@@ -12,3 +13,4 @@ services:
     container_name: backend
     build:
       context: ./backend
+    image: ${ACR_NAME}.azurecr.io/${WEBAPP_NAME}-backend:latest
