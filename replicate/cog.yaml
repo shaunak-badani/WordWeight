@@ -21,6 +21,7 @@ build:
     - "torch==2.3.1"
     - "transformers==4.48.3"
     - "matplotlib==3.10.0"
+    - "scipy==1.15.3"
 
   # commands run after the environment is setup
   run:

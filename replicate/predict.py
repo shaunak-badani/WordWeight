@@ -22,9 +22,9 @@ class Predictor(BasePredictor):
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if device == "cpu":
-            torch.manual_seed(42)
+            torch.manual_seed(32)
         else:
-            torch.cuda.manual_seed_all(42)
+            torch.cuda.manual_seed_all(32)
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
         print(f"Model running on : {device}")
@@ -34,9 +34,10 @@ class Predictor(BasePredictor):
             "CompVis/stable-diffusion-v1-4", 
             torch_dtype=torch_dtype
         ).to(device)
-        pipe.enable_attention_slicing() 
+        pipe.enable_attention_slicing()
         pipe.scheduler = DDIMScheduler.from_config(pipe.scheduler.config)
         pipe.scheduler.set_timesteps(40)
+        self.guidance_scale = 7.5
         self.pipe = pipe
         self.device = device
         self.torch_dtype = torch_dtype
@@ -118,6 +119,17 @@ class Predictor(BasePredictor):
         text_embeddings = self.pipe.text_encoder(text_input.input_ids.to(self.device))[0]
         text_embeddings.requires_grad_(True)
         text_embeddings.retain_grad()
+
+        # Unconditional text tokenization
+        max_length = text_input.input_ids.shape[-1]
+        uncond_input = self.pipe.tokenizer(
+            [""], padding="max_length", max_length=max_length, return_tensors="pt"
+        )
+        with torch.no_grad():
+            uncond_embeddings = self.pipe.text_encoder(uncond_input.input_ids.to(self.device))[0]
+        concat_text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
+        concat_text_embeddings = concat_text_embeddings.to(torch.float16)
+
         self.text_embeddings = text_embeddings
         with torch.enable_grad():
             latents = torch.randn((1, self.pipe.unet.config.in_channels, 64, 64), device=self.device)
@@ -126,15 +138,22 @@ class Predictor(BasePredictor):
         x = latents
         for i, t in enumerate(self.pipe.scheduler.timesteps):
             model_input = self.pipe.scheduler.scale_model_input(x, t)
+            model_input = torch.cat([model_input] * 2)
             print(i, end = " ")
-            noise_pred = cp.checkpoint(self.unet_forward, model_input, t, text_embeddings, use_reentrant=False)
+            noise_pred = cp.checkpoint(self.unet_forward, model_input, t, concat_text_embeddings, use_reentrant=False)
+
+            # Guidance
+            noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+            noise_pred = noise_pred_uncond + self.guidance_scale * (noise_pred_text - noise_pred_uncond)
+
             scheduler_output = self.pipe.scheduler.step(noise_pred, t, x)
             x = scheduler_output.prev_sample
+            
         self.pipe.vae.eval()
         with torch.enable_grad():
             image = self.pipe.vae.decode(x / 0.18215)
             image = image.sample
-        return image
+        return image[0]
 
     def wrap_image(self, image):
         """
